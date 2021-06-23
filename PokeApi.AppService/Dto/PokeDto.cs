@@ -1,4 +1,6 @@
-﻿namespace PokeApi.AppService.Dto
+﻿using System.Collections.Generic;
+
+namespace PokeApi.AppService.Dto
 {
     public class PokeDto
     {
@@ -9,5 +11,7 @@
         public bool is_default { get; set; }
         public int order { get; set; }
         public int weight { get; set; }
+
+        public List<Abilities> abilities { get; set; } = new List<Abilities>();
     }
 }

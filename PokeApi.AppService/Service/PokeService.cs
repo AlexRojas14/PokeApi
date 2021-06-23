@@ -15,33 +15,37 @@ namespace PokeApi.AppService.Service
             _clientFactory = clientFactory;
         }
 
-        public async Task GetPokeByNameAsync(string name)
+        public async Task<ServiceResult<PokeDto>> GetPokeByNameAsync(string name)
         {
+            var result = new ServiceResult<PokeDto>();
+
             var client = _clientFactory.CreateClient();
 
             var response = await client.GetAsync($"{AppSetting.BaseUrl}{name}");
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-                using var responseStream = await response.Content.ReadAsStreamAsync();
-                var pullRequests = await JsonSerializer.DeserializeAsync<PokeDto>(responseStream);
+                result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
+                return result;
             }
-        }
 
-        public string[] prueba()
-        {
-            string[] Summaries = new[]
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            var data = await JsonSerializer.DeserializeAsync<PokeDto>(responseStream);
+
+            if (data.id == 0)
             {
-                "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-            };
+                result.AddErrorMessage("No se ha localizado este pokemon");
+                return result;
+            }
 
-            return Summaries;
+            result.Data = data;
+
+            return result;
         }
     }
 
     public interface IPokeService
     {
-        Task GetPokeByNameAsync(string name);
-        string[] prueba();
+        Task<ServiceResult<PokeDto>> GetPokeByNameAsync(string name);
     }
 }
