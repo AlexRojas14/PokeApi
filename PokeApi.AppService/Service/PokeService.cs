@@ -80,7 +80,9 @@ namespace PokeApi.AppService.Service
 
             var fixedRow = pokeData.Data.ToFixedRow();
 
-            var filename = $"Detalle_del_pokemon_{pokeData.Data.name}.txt";
+            var pokeName = pokeData.Data != null ? pokeData.Data.name : "";
+
+            var filename = $"Detalle_del_pokemon_{pokeName}.txt";
 
             result.Data = new ReportFileResponse
             {

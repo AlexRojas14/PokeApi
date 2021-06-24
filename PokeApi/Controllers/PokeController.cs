@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PokeApi.AppService.Framework;
 using PokeApi.AppService.Service;
-using System.Net.Http;
+using PokeApi.Framework;
 using System.Threading.Tasks;
 
 namespace PokeApi.Controllers
@@ -17,6 +16,7 @@ namespace PokeApi.Controllers
             _pokeService = pokeService;
         }
 
+        [HttpGet]
         public async Task<IActionResult> Get(string name)
         {
             var result = await _pokeService.GetPokeByNameAsync(name);
@@ -24,12 +24,13 @@ namespace PokeApi.Controllers
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
-        public HttpResponseMessage DownloadDetail(int id)
+        [HttpGet]
+        [Route("DownloadDetail")]
+        public FileContentResult DownloadDetail(int id)
         {
             var result = _pokeService.DownloadDetail(id);
 
-            var httpResult = result.Data.GetFileAsHttpResponseMessage();
+            var httpResult = result.Data.GetFileAsFileContentResult();
 
             return httpResult;
         }

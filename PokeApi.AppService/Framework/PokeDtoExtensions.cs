@@ -1,6 +1,4 @@
 ﻿using PokeApi.AppService.Dto;
-using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace PokeApi.AppService.Framework
@@ -10,46 +8,64 @@ namespace PokeApi.AppService.Framework
         public static StringBuilder ToFixedRow(this PokeDto pokeDetail)
         {
             var stringBuild = new StringBuilder();
-            var fixedRow = "";
 
-            string[] headers =
-            {
-                "Id",
-                "Nombre",
-                "Experiencia de Base",
-                "Altura",
-                "Es Predeterminado",
-                "Orden",
-                "Peso"
-            };
+            if (pokeDetail == null)
+                return stringBuild;
 
-            foreach (var header in headers)
+            var fixedPokeHeader = GetStringPadR("Id", 7);
+            fixedPokeHeader += GetStringPadR("Nombre", 20);
+            fixedPokeHeader += GetStringPadR("Experiencia", 20);
+            fixedPokeHeader += GetStringPadR("Altura", 13);
+            fixedPokeHeader += GetStringPadR("Predeterminado", 20);
+            fixedPokeHeader += GetStringPadR("Orden", 10);
+            fixedPokeHeader += GetStringPadR("Peso", 10);
+
+            stringBuild.AppendLine(fixedPokeHeader);
+
+            var fixedPokeRow = GetStringFromInt(pokeDetail.id, 7);
+            fixedPokeRow += GetStringPadR(pokeDetail.name, 20);
+            fixedPokeRow += GetStringFromInt(pokeDetail.base_experience, 20);
+            fixedPokeRow += GetStringFromInt(pokeDetail.height, 13);
+            fixedPokeRow += GetStringPadR(pokeDetail.is_default ? "true" : "false", 20);
+            fixedPokeRow += GetStringFromInt(pokeDetail.order, 10);
+            fixedPokeRow += GetStringFromInt(pokeDetail.weight, 10);
+
+            stringBuild.AppendLine(fixedPokeRow);
+
+            stringBuild.AppendLine("\n--------------Habilidades--------------");
+
+            var fixedAbilityHeader = GetStringPadR("Nombre", 30);
+            fixedAbilityHeader += GetStringPadR("Es Oculta", 10);
+
+            stringBuild.AppendLine(fixedAbilityHeader);
+
+            foreach (var ability in pokeDetail.abilities)
             {
-                fixedRow += GetStringPadR(header, 10);
+                var fixedAbilityRow = GetStringPadR(ability.ability.name, 30);
+                fixedAbilityRow += GetStringPadR(ability.is_hidden ? "true" : "false", 10);
+
+                stringBuild.AppendLine(fixedAbilityRow);
             }
 
-            stringBuild.AppendLine(fixedRow);
+            stringBuild.AppendLine("\n----------------------------------------------Imagenes----------------------------------------------");
 
-            fixedRow += GetStringFromInt(pokeDetail.id, 1);
-            fixedRow += GetStringPadR(pokeDetail.name, 10);
-            fixedRow += GetStringFromInt(pokeDetail.base_experience, 40);
-            fixedRow += GetStringFromInt(pokeDetail.height, 40);
-            fixedRow += GetStringPadR(pokeDetail.is_default ? "true" : "false", 15);
-            fixedRow += GetStringFromInt(pokeDetail.order, 40);
-            fixedRow += GetStringFromInt(pokeDetail.weight, 60);
+            var sprites = pokeDetail.sprites;
 
-            stringBuild.AppendLine(fixedRow);
+            stringBuild.AppendLine(GetStringPadR(sprites.back_default, 100));
+            stringBuild.AppendLine(GetStringPadR(sprites.back_shiny, 100));
+            stringBuild.AppendLine(GetStringPadR(sprites.front_default, 100));
+            stringBuild.AppendLine(GetStringPadR(sprites.front_shiny, 100));
 
             return stringBuild;
         }
 
-        private static string GetStringPadR(string value, int length, char pad = '|')
+        private static string GetStringPadR(string value, int length, char pad = ' ')
         {
             return value == null ? "".PadRight(length, ' ') : value.PadRight(length, pad).Substring(0, length);
 
         }
 
-        private static string GetStringFromInt(int value, int length, char pad = '|')
+        private static string GetStringFromInt(int value, int length, char pad = ' ')
         {
             return GetStringPadR(value.ToString(), length, pad);
         }
