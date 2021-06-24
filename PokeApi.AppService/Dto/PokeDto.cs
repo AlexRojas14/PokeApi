@@ -13,5 +13,6 @@ namespace PokeApi.AppService.Dto
         public int weight { get; set; }
 
         public List<Abilities> abilities { get; set; } = new List<Abilities>();
+        public Sprites sprites { get; set; } = new Sprites();
     }
 }
