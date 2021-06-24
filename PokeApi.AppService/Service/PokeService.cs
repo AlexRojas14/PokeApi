@@ -26,8 +26,7 @@ namespace PokeApi.AppService.Service
 
             if (!response.IsSuccessStatusCode)
             {
-                result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
-                return result;
+                return await SearchPokeByFilterNameAsync(name);
             }
 
             var responseStream = await response.Content.ReadAsStreamAsync();
@@ -35,9 +34,37 @@ namespace PokeApi.AppService.Service
 
             if (data.id == 0)
             {
+                result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
+                return result;
+            }
+
+            result.Data = data;
+
+            return result;
+        }
+
+        public async Task<ServiceResult<PokeDto>> SearchPokeByFilterNameAsync(string filterName)
+        {
+            var result = new ServiceResult<PokeDto>();
+
+            var client = _clientFactory.CreateClient();
+
+            var response = await client.GetAsync(AppSetting.BaseUrl);
+
+            if (!response.IsSuccessStatusCode)
+            {
                 result.AddErrorMessage("No se ha localizado este pokemon");
                 return result;
             }
+
+            var responseStream = await response.Content.ReadAsStreamAsync();
+            var data = await JsonSerializer.DeserializeAsync<PokeDto>(responseStream);
+
+            //if (data.id == 0)
+            //{
+            //    result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
+            //    return result;
+            //}
 
             result.Data = data;
 
