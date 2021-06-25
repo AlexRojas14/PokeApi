@@ -25,7 +25,7 @@ namespace PokeApi.AppService
 
             if (!response.IsSuccessStatusCode)
             {
-                result.AddErrorMessage("No se ha Encontrado este Pokemon");
+                result.AddErrorMessage("No se ha Encontrado ningun Pokemon");
                 return result;
             }
 

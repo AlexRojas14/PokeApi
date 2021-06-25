@@ -14,40 +14,16 @@ namespace PokeApi.AppService.Service
         {
         }
 
-        public async Task<ServiceResult<List<PokeDto>>> GetPokeByNameAsync(string name)
+        public async Task<ServiceResult<List<PokeDto>>> SearchPokeByFilterNameAsync(string filterName)
         {
             var result = new ServiceResult<List<PokeDto>>();
             var data = new List<PokeDto>();
 
-            if (string.IsNullOrEmpty(name))
+            if (string.IsNullOrEmpty(filterName))
             {
                 result.AddErrorMessage("Error, debe de enviar un pokemon");
                 return result;
             }
-
-            var makeHttpGetResponse = await MakeHttpGetRequest<PokeDto>($"{AppSetting.BaseUrl}{name}");
-
-            if (!makeHttpGetResponse.ExecutedSuccesfully)
-            {
-                return await SearchPokeByFilterNameAsync(name);
-            }
-
-            data.Add(makeHttpGetResponse.Data);
-            result.Data = data;
-
-            if (result.Data.Count == 0)
-            {
-                result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
-                return result;
-            }
-
-            return result;
-        }
-
-        private async Task<ServiceResult<List<PokeDto>>> SearchPokeByFilterNameAsync(string filterName)
-        {
-            var result = new ServiceResult<List<PokeDto>>();
-            var data = new List<PokeDto>();
 
             var resultallPokeCount = await MakeHttpGetRequest<AllPokeCount>(AppSetting.BaseUrl);
             var count = resultallPokeCount.Data.count;
@@ -60,15 +36,16 @@ namespace PokeApi.AppService.Service
 
             foreach (var poke in pokeResult)
             {
-                var GetPokeByNameResult = await GetPokeByNameAsync(poke.name);
-                data.AddRange(GetPokeByNameResult.Data);
+                var GetPokeByNameResult = await MakeHttpGetRequest<PokeDto>($"{AppSetting.BaseUrl}{poke.name}");
+
+                data.Add(GetPokeByNameResult.Data);
             }
 
             result.Data = data;
 
             if (result.Data.Count == 0)
             {
-                result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
+                result.AddErrorMessage("No se ha Encontrado ningun Pokemon");
                 return result;
             }
 
@@ -112,7 +89,7 @@ namespace PokeApi.AppService.Service
 
     public interface IPokeService
     {
-        Task<ServiceResult<List<PokeDto>>> GetPokeByNameAsync(string name);
+        Task<ServiceResult<List<PokeDto>>> SearchPokeByFilterNameAsync(string filterName);
         ServiceResult<ReportFileResponse> DownloadDetail(int id);
     }
 }

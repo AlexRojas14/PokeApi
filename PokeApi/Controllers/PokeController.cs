@@ -19,7 +19,7 @@ namespace PokeApi.Controllers
         [HttpGet]
         public async Task<IActionResult> Get(string name)
         {
-            var result = await _pokeService.GetPokeByNameAsync(name);
+            var result = await _pokeService.SearchPokeByFilterNameAsync(name);
 
             return Ok(result);
         }
