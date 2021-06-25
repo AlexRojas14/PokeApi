@@ -1,100 +1,89 @@
 ﻿using PokeApi.AppService.Dto;
 using PokeApi.AppService.Framework;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace PokeApi.AppService.Service
 {
-    public class PokeService : IPokeService
+    public class PokeService : HttpHelper, IPokeService
     {
-        private readonly IHttpClientFactory _clientFactory;
-
-        public PokeService(IHttpClientFactory clientFactory)
+        public PokeService(IHttpClientFactory clientFactory) : base(clientFactory)
         {
-            _clientFactory = clientFactory;
         }
 
-        public async Task<ServiceResult<PokeDto>> GetPokeByNameAsync(string name)
+        public async Task<ServiceResult<List<PokeDto>>> GetPokeByNameAsync(string name)
         {
-            var result = new ServiceResult<PokeDto>();
+            var result = new ServiceResult<List<PokeDto>>();
+            var data = new List<PokeDto>();
 
-            var client = _clientFactory.CreateClient();
+            if (string.IsNullOrEmpty(name))
+            {
+                result.AddErrorMessage("Error, debe de enviar un pokemon");
+                return result;
+            }
 
-            var response = await client.GetAsync($"{AppSetting.BaseUrl}{name}");
+            var makeHttpGetResponse = await MakeHttpGetRequest<PokeDto>($"{AppSetting.BaseUrl}{name}");
 
-            if (!response.IsSuccessStatusCode)
+            if (!makeHttpGetResponse.ExecutedSuccesfully)
             {
                 return await SearchPokeByFilterNameAsync(name);
             }
 
-            var responseStream = await response.Content.ReadAsStreamAsync();
-            var data = await JsonSerializer.DeserializeAsync<PokeDto>(responseStream);
+            data.Add(makeHttpGetResponse.Data);
+            result.Data = data;
 
-            if (data.id == 0)
+            if (result.Data.Count == 0)
             {
                 result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
                 return result;
             }
 
-            result.Data = data;
-
             return result;
         }
 
-        public async Task<ServiceResult<PokeDto>> SearchPokeByFilterNameAsync(string filterName)
+        private async Task<ServiceResult<List<PokeDto>>> SearchPokeByFilterNameAsync(string filterName)
         {
-            var result = new ServiceResult<PokeDto>();
+            var result = new ServiceResult<List<PokeDto>>();
+            var data = new List<PokeDto>();
 
-            var client = _clientFactory.CreateClient();
+            var resultallPokeCount = await MakeHttpGetRequest<AllPokeCount>(AppSetting.BaseUrl);
+            var count = resultallPokeCount.Data.count;
+            
+            var allPoke = await MakeHttpGetRequest<PokemonsResult>($"{AppSetting.BaseUrl}?limit={count}");
 
-            var response = await client.GetAsync(AppSetting.BaseUrl);
+            var pokeResult = allPoke.Data.results
+                .Where(x => x.name.Contains(filterName))
+                .ToList();
 
-            if (!response.IsSuccessStatusCode)
+            foreach (var poke in pokeResult)
             {
-                result.AddErrorMessage("No se ha localizado este pokemon");
-                return result;
+                var GetPokeByNameResult = await GetPokeByNameAsync(poke.name);
+                data.AddRange(GetPokeByNameResult.Data);
             }
 
-            var responseStream = await response.Content.ReadAsStreamAsync();
-            var data = await JsonSerializer.DeserializeAsync<PokeDto>(responseStream);
-
-            //if (data.id == 0)
-            //{
-            //    result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
-            //    return result;
-            //}
-
             result.Data = data;
 
-            return result;
-        }
-
-        public async Task<ServiceResult<PokeDto>> GetPokeByIdAsync(int id)
-        {
-            var result = new ServiceResult<PokeDto>();
-
-            var client = _clientFactory.CreateClient();
-
-            var response = await client.GetAsync($"{AppSetting.BaseUrl}{id}");
-
-            if (!response.IsSuccessStatusCode)
+            if (result.Data.Count == 0)
             {
                 result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
                 return result;
             }
 
-            var responseStream = await response.Content.ReadAsStreamAsync();
-            var data = await JsonSerializer.DeserializeAsync<PokeDto>(responseStream);
+            return result;
+        }
 
-            if (data.id == 0)
+        private async Task<ServiceResult<PokeDto>> GetPokeByIdAsync(int id)
+        {
+            var result = await MakeHttpGetRequest<PokeDto>($"{AppSetting.BaseUrl}{id}");
+
+            if (result.Data.id == 0)
             {
-                result.AddErrorMessage("No se ha localizado este pokemon");
+                result.AddErrorMessage("Se ha detectado un error. Contacte con su administrador");
                 return result;
             }
-
-            result.Data = data;
 
             return result;
         }
@@ -123,7 +112,7 @@ namespace PokeApi.AppService.Service
 
     public interface IPokeService
     {
-        Task<ServiceResult<PokeDto>> GetPokeByNameAsync(string name);
+        Task<ServiceResult<List<PokeDto>>> GetPokeByNameAsync(string name);
         ServiceResult<ReportFileResponse> DownloadDetail(int id);
     }
 }
